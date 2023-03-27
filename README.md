@@ -1,0 +1,8 @@
+# ConsistentHashing: Implementation of a distributed hash table using pymemcache
+As in DynamoDB, consistent hashing can be used to implement a distributed database or hash table using a ring topology. The class `Ring` represents the supporting data structure, which contains a number of `Node`s along with their locations on the ring. Each `Node` is a memcache instance along with a set of keys which have been stored in that instance. For simplicity, virtual nodes are not implemented and the replication factor is set to 2.
+
+Assume that we are given a ring with size `N` in which several nodes have been added. Given a key `k`, we determine which node the key belongs to using its hash value given by `h(k)=murmur3_32(k)%N`. The function `find_next_node` returns the first node `n` we encounter if we start from location `h(k)` on the ring and travel clockwise, and the returned node `n` is where we store the key-value pair `(k,v)` using `dht_set` or where we retrieve data with the key `k` using `dht_get`. Since we require a replication factor of 2, when we write the pair `(k,v)` we also add it to the node that comes directly after `n` on the ring.
+
+In order to maintain 2 replica of all data in a consistent manner, data reorganizing is required when a new node is being added via `add_node` or when a node is being deleted via `delete_node`. Such reorganization is achieve by inspecting where the hash value of the affected keys fall on the ring, add data to the nodes that are responsible for them and delete data from the nodes that are no longer responsible for them after the addition/removal of a node.
+
+A command line interface is implemented. In order to run `system_test`, memcache needs to be running on the ports 11211-11215.
